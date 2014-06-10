@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:cxf="http://www.mulesoft.org/schema/mule/cxf" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.5.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/cxf http://www.mulesoft.org/schema/mule/cxf/current/mule-cxf.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+    <cxf:configuration name="CXF_Configuration" enableMuleSoapHeaders="true" initializeStaticBusInstance="true" doc:name="CXF Configuration"/>
+    <db:generic-config name="Oracle_XE_Comfig" url="jdbc:oracle:thin:demo/demo@//magento-node:1521/XE" driverClassName="oracle.jdbc.driver.OracleDriver" doc:name="Generic Database Configuration"/>
+    <flow name="soap-endpoint" doc:name="soap-endpoint">
+        <http:inbound-endpoint exchange-pattern="request-response" host="localhost" port="9990" path="ticketService" doc:name="HTTP"/>
+        <cxf:jaxws-service configuration-ref="CXF_Configuration" namespace="http://mulesoft.com/demo" serviceClass="com.mulesoft.demo.SoapTicketService" doc:name="CXF"/>
+        <flow-ref name="persist-booking" doc:name="Flow Reference"/>
+    </flow>
+    <sub-flow name="persist-booking" doc:name="persist-booking">
+        <db:insert config-ref="Oracle_XE_Comfig" doc:name="Database">
+            <db:parameterized-query><![CDATA[INSERT INTO BOOKINGS (DEP, DEST, PRICE, CUSTOMER) VALUES (#[payload.departure], #[payload.destination], #[payload.price], #[payload.customer])]]></db:parameterized-query>
+        </db:insert>
+    </sub-flow>
+</mule>
